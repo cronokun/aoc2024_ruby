@@ -1,0 +1,4 @@
+# See the writing guide of rbs: https://github.com/ruby/rbs#guides
+module AdventOfCode2024
+  VERSION: String
+end

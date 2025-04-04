@@ -3,7 +3,8 @@
 require "test_helper"
 
 class TestAdventOfCode2024 < Minitest::Test
-  def test_that_it_has_a_version_number
-    refute_nil ::AdventOfCode2024::VERSION
+  def test_day1_answers
+    input = File.read("./test/inputs/day1")
+    assert_equal 2192892, AdventOfCode2024::Day1.part1(input)
   end
 end

@@ -10,7 +10,8 @@ class TestAdventOfCode2024 < Minitest::Test
   end
 
   def test_day2_answers
-    input = File.read("./test/inputs/day1")
-    assert_equal 22962826, AdventOfCode2024::Day1.part2(input)
+    input = File.read("./test/inputs/day2")
+    assert_equal 663, AdventOfCode2024::Day2.part1(input)
+    assert_equal 692, AdventOfCode2024::Day2.part2(input)
   end
 end

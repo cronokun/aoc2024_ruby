@@ -3,12 +3,14 @@
 require "test_helper"
 
 class TestDay1 < Minitest::Test
+  include AdventOfCode2024
+
   def test_part1
-    assert_equal 11, AdventOfCode2024::Day1.part1(input)
+    assert_equal 11, Day1.part1(input)
   end
 
   def test_part2
-    assert_equal 31, AdventOfCode2024::Day1.part2(input)
+    assert_equal 31, Day1.part2(input)
   end
 
   private

@@ -3,13 +3,8 @@
 module AdventOfCode2024
   # Day 2: Red-Nosed Reports
   class Day2
-    def self.part1(input)
-      new(input).part1
-    end
-
-    def self.part2(input)
-      new(input).part2
-    end
+    def self.part1(input) = new(input).part1
+    def self.part2(input) = new(input).part2
 
     def initialize(input)
       @input = parse(input)

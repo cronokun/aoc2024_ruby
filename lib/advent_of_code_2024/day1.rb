@@ -3,13 +3,8 @@
 module AdventOfCode2024
   # Day1: Historian Hysteria
   class Day1
-    def self.part1(input)
-      new(input).part1
-    end
-
-    def self.part2(input)
-      new(input).part2
-    end
+    def self.part1(input) = new(input).part1
+    def self.part2(input) = new(input).part2
 
     def initialize(input)
       case parse(input)

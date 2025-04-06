@@ -22,4 +22,10 @@ class TestAdventOfCode2024 < Minitest::Test
     assert_equal 170_807_108, Day3.part1(input)
     assert_equal 74_838_033, Day3.part2(input)
   end
+
+  def test_day4_answers
+    input = File.read("./test/inputs/day4")
+    assert_equal 2_434, Day4.part1(input)
+    assert_equal 1_835, Day4.part2(input)
+  end
 end

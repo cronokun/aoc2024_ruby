@@ -9,7 +9,7 @@ module AdventOfCode2024
       def initialize(location, direction = :up)
         @location = location
         @direction = direction
-        @path = []
+        @path = Set.new
       end
 
       def move_to(loc, dir)
@@ -33,13 +33,13 @@ module AdventOfCode2024
           when :right then (x.succ).upto(nx).map { |x1| [x1, y] }
           end
 
-        locations.each { |loc| @path << [loc, @direction] }
+        locations.each { |loc| @path.add([loc, @direction]) }
       end
     end
 
     class Area
       def initialize(size, obstacles)
-        @obstacles = prepare_obstacles(obstacles)
+        @obstacles = obstacles
         @size = size
       end
 
@@ -65,20 +65,6 @@ module AdventOfCode2024
       def right_from(x, y)
         o = @obstacles[:rows][y].find { |x1| x1 > x }
         [o&.pred || max, y]
-      end
-
-      private
-
-      def prepare_obstacles(obstacles)
-        columns = Hash.new { |h, k| h[k] = [] }
-        rows = Hash.new { |h, k| h[k] = [] }
-
-        obstacles.sort.each do |x, y|
-          columns[x] << y
-          rows[y] << x
-        end
-
-        {columns: columns, rows: rows}
       end
     end
 
@@ -117,18 +103,26 @@ module AdventOfCode2024
     # Solving puzzle
 
     def self.part1(input)
-      location, obstacles, size = parse(input)
-      run(location, obstacles, size) => [:outside, guard]
+      location, obs, size = parse(input)
+      run(location, prepare_obstacles(obs), size) => [:outside, guard]
       guard.visited.add(location).size
     end
 
     def self.part2(input)
-      location, obstacles, size = parse(input)
+      location, obs, size = parse(input)
+      obstacles = prepare_obstacles(obs)
       run(location, obstacles, size) => [:outside, guard]
 
       guard
         .visited
-        .map { run(location, obstacles.dup.push(_1), size) }
+        .map do |loc|
+          # HACK: Don't recalculate obstacles hash each time. Just add new
+          # obsacle to hash and then remove it (because mutability sucks!).
+          add_obstacle(obstacles, loc)
+          res = run(location, obstacles, size)
+          remove_obstacle(obstacles, loc)
+          res
+        end
         .filter { _1.first == :loop }
         .length
     end
@@ -140,6 +134,34 @@ module AdventOfCode2024
       area = Area.new(size, obstacles)
       finder = Pathfinder.new(area: area, guard: guard)
       finder.move!
+    end
+
+    def self.add_obstacle(obs, loc)
+      x, y = loc
+      obs[:columns][x].push(y)
+      obs[:columns][x].sort!
+      obs[:rows][y].push(x)
+      obs[:rows][y].sort!
+      obs
+    end
+
+    def self.remove_obstacle(obs, loc)
+      x, y = loc
+      obs[:columns][x].delete(y)
+      obs[:rows][y].delete(x)
+      obs
+    end
+
+    def self.prepare_obstacles(obstacles)
+      columns = Hash.new { |h, k| h[k] = [] }
+      rows = Hash.new { |h, k| h[k] = [] }
+
+      obstacles.sort.each do |x, y|
+        columns[x] << y
+        rows[y] << x
+      end
+
+      {columns: columns, rows: rows}
     end
 
     def self.parse(input)

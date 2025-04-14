@@ -20,16 +20,16 @@ module AdventOfCode2024
 
       def visited
         # Expand path sections
-        @path.flat_map do |dir, xs, ys|
-          case dir
-          when :up
-            (ys[0]).downto(ys[1]).map { |y| [xs, y] }
-          when :down
-            (ys[0]).upto(ys[1]).map { |y| [xs, y] }
-          when :left
-            (xs[0]).downto(xs[1]).map { |x| [x, ys] }
-          when :right
-            (xs[0]).upto(xs[1]).map { |x| [x, ys] }
+        @path.flat_map do |position|
+          case position
+          in [:up, x, [y1, y2]]
+            (y1).downto(y2).map { |y| [x, y] }
+          in [:down, x, [y1, y2]]
+            (y1).upto(y2).map { |y| [x, y] }
+          in [:left, [x1, x2], y]
+            (x1).downto(x2).map { |x| [x, y] }
+          in [:right, [x1, x2], y]
+            (x1).upto(x2).map { |x| [x, y] }
           end
         end.to_set
       end
@@ -113,85 +113,104 @@ module AdventOfCode2024
     ##
     # Solving puzzle
 
+    class Part1
+      def initialize(input)
+        @location, obs, @size = parse(input)
+        @obstacles = prepare_obstacles(obs)
+      end
+
+      def solution
+        run => [:outside, guard]
+        guard.visited.add(@location).size
+      end
+
+      protected
+
+      def run
+        guard = Guard.new(@location)
+        area = Area.new(@size, @obstacles)
+        finder = Pathfinder.new(area: area, guard: guard)
+        finder.move!
+      end
+
+      private
+
+      def parse(input)
+        guard = nil
+        obstacles = []
+        xs = input.lines(chomp: true)
+
+        (0...xs.length).each do |y|
+          (0...xs.length).each do |x|
+            case xs[y][x]
+            when "^"
+              guard = [x, y]
+            when "#"
+              obstacles << [x, y]
+            end
+          end
+        end
+
+        [guard, obstacles, xs.length]
+      end
+
+      def prepare_obstacles(obstacles)
+        columns = Hash.new { |h, k| h[k] = Set.new }
+        rows = Hash.new { |h, k| h[k] = Set.new }
+
+        obstacles.sort.each do |x, y|
+          columns[x].add(y)
+          rows[y].add(x)
+        end
+
+        {columns: columns, rows: rows}
+      end
+    end
+
+    class Part2 < Part1
+      def solution
+        run => [:outside, guard]
+
+        count = 0
+
+        guard
+          .visited
+          .map do |loc|
+            # HACK: Don't recalculate obstacles hash each time. Just add new
+            # obsacle to hash and then remove it (because mutability sucks!).
+            add_obstacle(@obstacles, loc)
+            count += 1 if run.first == :loop
+            remove_obstacle(@obstacles, loc)
+          end
+
+        count
+      end
+
+      private
+
+      def add_obstacle(obs, loc)
+        x, y = loc
+        ys = obs[:columns][x].add(y)
+        obs[:columns][x] = ys.sort.to_set
+        xs = obs[:rows][y].add(x)
+        obs[:rows][y] = xs.sort.to_set
+        obs
+      end
+
+      def remove_obstacle(obs, loc)
+        x, y = loc
+        obs[:columns][x].delete(y)
+        obs[:rows][y].delete(x)
+        obs
+      end
+    end
+
     def self.part1(input)
-      location, obs, size = parse(input)
-      run(location, prepare_obstacles(obs), size) => [:outside, guard]
-      guard.visited.add(location).size
+      Part1.new(input).solution
     end
 
     def self.part2(input)
-      location, obs, size = parse(input)
-      obstacles = prepare_obstacles(obs)
-      run(location, obstacles, size) => [:outside, guard]
-
-      guard
-        .visited
-        .map do |loc|
-          # HACK: Don't recalculate obstacles hash each time. Just add new
-          # obsacle to hash and then remove it (because mutability sucks!).
-          add_obstacle(obstacles, loc)
-          res = run(location, obstacles, size)
-          remove_obstacle(obstacles, loc)
-          res
-        end
-        .filter { _1.first == :loop }
-        .length
-    end
-
-    private
-
-    def self.run(location, obstacles, size)
-      guard = Guard.new(location)
-      area = Area.new(size, obstacles)
-      finder = Pathfinder.new(area: area, guard: guard)
-      finder.move!
-    end
-
-    def self.add_obstacle(obs, loc)
-      x, y = loc
-      ys = obs[:columns][x].add(y)
-      obs[:columns][x] = ys.sort.to_set
-      xs = obs[:rows][y].add(x)
-      obs[:rows][y] = xs.sort.to_set
-      obs
-    end
-
-    def self.remove_obstacle(obs, loc)
-      x, y = loc
-      obs[:columns][x].delete(y)
-      obs[:rows][y].delete(x)
-      obs
-    end
-
-    def self.prepare_obstacles(obstacles)
-      columns = Hash.new { |h, k| h[k] = Set.new }
-      rows = Hash.new { |h, k| h[k] = Set.new }
-
-      obstacles.sort.each do |x, y|
-        columns[x].add(y)
-        rows[y].add(x)
-      end
-
-      {columns: columns, rows: rows}
-    end
-
-    def self.parse(input)
-      guard = nil
-      obstacles = []
-      xs = input.lines(chomp: true)
-
-      (0...xs.length).each do |y|
-        (0...xs.length).each do |x|
-          case xs[y][x]
-          when "^"
-            guard = [x, y]
-          when "#"
-            obstacles << [x, y]
-          end
-        end
-      end
-
-      [guard, obstacles, xs.length]
+      Part2.new(input).solution
     end
   end
 end

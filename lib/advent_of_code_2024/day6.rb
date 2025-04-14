@@ -12,29 +12,29 @@ module AdventOfCode2024
         @path = Set.new
       end
 
-      def move_to(loc, dir)
-        add_path_to(*loc)
+      def move_to(loc, dir, path)
         @location = loc
         @direction = dir
+        @path.add?(path)
       end
 
-      def visited = @path.map(&:first).to_set
-
-      private
-
-      def add_path_to(nx, ny)
-        x, y = @location
-
-        locations =
-          case @direction
-          when :up    then (y.pred).downto(ny).map { |y1| [x, y1] }
-          when :down  then (y.succ).upto(ny).map { |y1| [x, y1] }
-          when :left  then (x.pred).downto(nx).map { |x1| [x1, y] }
-          when :right then (x.succ).upto(nx).map { |x1| [x1, y] }
+      def visited
+        # Expand path sections
+        @path.flat_map do |dir, xs, ys|
+          case dir
+          when :up
+            (ys[0]).downto(ys[1]).map { |y| [xs, y] }
+          when :down
+            (ys[0]).upto(ys[1]).map { |y| [xs, y] }
+          when :left
+            (xs[0]).downto(xs[1]).map { |x| [x, ys] }
+          when :right
+            (xs[0]).upto(xs[1]).map { |x| [x, ys] }
           end
-
-        locations.each { |loc| @path.add([loc, @direction]) }
+        end.to_set
       end
+
+      def loop?(path) = @path.include?(path)
     end
 
     class Area
@@ -53,12 +53,12 @@ module AdventOfCode2024
       end
 
       def up_from(x, y)
-        o = @obstacles[:columns][x].reverse.find { |y1| y1 < y }
+        o = @obstacles[:columns][x].filter { |y1| y1 < y }.last
         [x, o&.succ || 0]
       end
 
       def left_from(x, y)
-        o = @obstacles[:rows][y].reverse.find { |x1| x1 < x }
+        o = @obstacles[:rows][y].filter { |x1| x1 < x }.last
         [o&.succ || 0, y]
       end
 
@@ -78,8 +78,9 @@ module AdventOfCode2024
       def move!
         loop do
           next_loc, next_dir = find_next_position
-          return [:loop, @guard] if loop?([next_loc, @guard.direction])
-          @guard.move_to(next_loc, next_dir)
+          path = to_guard_path(*next_loc)
+          return [:loop, @guard] if @guard.loop?(path)
+          @guard.move_to(next_loc, next_dir, path)
           return [:outside, @guard] if outside?
         end
       end
@@ -95,7 +96,17 @@ module AdventOfCode2024
         end
       end
 
-      def loop?(pos) = @guard.path.include?(pos)
+      def to_guard_path(nx, ny)
+        x, y = @guard.location
+
+        case @guard.direction
+        when :up    then [:up, x, [y.pred, ny]]
+        when :down  then [:down, x, [y.succ, ny]]
+        when :left  then [:left, [x.pred, nx], y]
+        when :right then [:right, [x.succ, nx], y]
+        end
+      end
+
       def outside? = @area.outsize?(*@guard.location)
     end
 
@@ -138,10 +149,10 @@ module AdventOfCode2024
 
     def self.add_obstacle(obs, loc)
       x, y = loc
-      obs[:columns][x].push(y)
-      obs[:columns][x].sort!
-      obs[:rows][y].push(x)
-      obs[:rows][y].sort!
+      ys = obs[:columns][x].add(y)
+      obs[:columns][x] = ys.sort.to_set
+      xs = obs[:rows][y].add(x)
+      obs[:rows][y] = xs.sort.to_set
       obs
     end
 
@@ -153,12 +164,12 @@ module AdventOfCode2024
     end
 
     def self.prepare_obstacles(obstacles)
-      columns = Hash.new { |h, k| h[k] = [] }
-      rows = Hash.new { |h, k| h[k] = [] }
+      columns = Hash.new { |h, k| h[k] = Set.new }
+      rows = Hash.new { |h, k| h[k] = Set.new }
 
       obstacles.sort.each do |x, y|
-        columns[x] << y
-        rows[y] << x
+        columns[x].add(y)
+        rows[y].add(x)
       end
 
       {columns: columns, rows: rows}

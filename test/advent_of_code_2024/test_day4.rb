@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "minitest/test"
 require "test_helper"
 
 class TestDay4 < Minitest::Test

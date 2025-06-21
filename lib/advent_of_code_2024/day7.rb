@@ -3,47 +3,51 @@
 module AdventOfCode2024
   # Day 7: Bridge Repair
   class Day7
-    def self.part1(input) = new(input, [:+, :*]).part1
-    def self.part2(input) = new(input, []).part2
+    def self.part1(input) = new(input, [:+, :*]).solve
+    def self.part2(input) = new(input, [:+, :*, :|]).solve
 
     def initialize(input, ops)
       @input = parse(input)
       @ops = ops
     end
 
-    def part1
+    def better_solve
+      @input
+        .filter { |(res, nums)| valid?(res, nums) }
+    end
+
+    def solve
       @input
         .filter { valid?(*_1) }
         .map { _1.first }
         .sum
     end
 
-    def part2 = 0
-
     private
 
-    def valid?(result, xs)
-      @ops.repeated_permutation(xs.size - 1) do |ops|
-        return true if valid_equation?(result, xs, ops)
-      end
+    def valid?(expected, nums)
+      results =
+        nums.drop(1).reduce(nums.take(1)) do |acc, x|
+          res = []
 
-      false
-    end
-
-    def valid_equation?(expected, nums, ops)
-      x, *xs = nums
-
-      actual =
-        ops.zip(xs).reduce(x) do |res, (op, x)|
-          case op
-          when :+
-            res + x
-          when :*
-            res * x
+          for op in @ops do
+            for r in acc do
+              res.push(apply_op(op, r, x))
+            end
           end
+
+          res.reject { _1 > expected }
         end
 
-      actual == expected
+      results.any? { _1 == expected }
+    end
+
+    def apply_op(op, a, b)
+      case op
+      when :+ then a + b
+      when :* then a * b
+      when :| then "#{a}#{b}".to_i
+      end
     end
 
     def parse(input)

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    advent_of_code_2024 (6.2.1)
+    advent_of_code_2024 (7.2.1)
 
 GEM
   remote: https://rubygems.org/

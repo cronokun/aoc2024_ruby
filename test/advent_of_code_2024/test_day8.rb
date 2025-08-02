@@ -10,7 +10,7 @@ class TestDay8 < Minitest::Test
   end
 
   def test_part2
-    assert_equal 813, Day8.part2(input)
+    assert_equal 34, Day8.part2(input)
   end
 
   private

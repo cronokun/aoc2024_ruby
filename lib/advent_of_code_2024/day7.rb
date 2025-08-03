@@ -12,15 +12,13 @@ module AdventOfCode2024
     end
 
     def better_solve
-      @input
-        .filter { |(res, nums)| valid?(res, nums) }
+      @input.filter { |(res, nums)| valid?(res, nums) }
     end
 
     def solve
-      @input
-        .filter { valid?(*_1) }
-        .map { _1.first }
-        .sum
+      @input.filter { valid?(*_1) }
+            .map(&:first)
+            .sum
     end
 
     private
@@ -30,8 +28,8 @@ module AdventOfCode2024
         nums.drop(1).reduce(nums.take(1)) do |acc, x|
           res = []
 
-          for op in @ops do
-            for r in acc do
+          @ops.each do |op|
+            acc.each do |r|
               res.push(apply_op(op, r, x))
             end
           end

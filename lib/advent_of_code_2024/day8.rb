@@ -24,10 +24,8 @@ module AdventOfCode2024
     private
 
     def solve(&block)
-      @anthennas.each do |_key, locations|
-        locations.combination(2).each do |a1, a2|
-          yield a1, a2
-        end
+      @anthennas.each_value do |locations|
+        locations.combination(2).each(&block)
       end
 
       @antinodes.size

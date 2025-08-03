@@ -3,6 +3,7 @@
 module AdventOfCode2024
   # Day6: Guard Gallivant
   module Day6
+    # Represents a guard that can move across a map and keep a visited path.
     class Guard
       attr_reader :direction, :location, :path
 
@@ -23,13 +24,13 @@ module AdventOfCode2024
         @path.flat_map do |position|
           case position
           in [:up, x, [y1, y2]]
-            (y1).downto(y2).map { |y| [x, y] }
+            y1.downto(y2).map { |y| [x, y] }
           in [:down, x, [y1, y2]]
-            (y1).upto(y2).map { |y| [x, y] }
+            y1.upto(y2).map { |y| [x, y] }
           in [:left, [x1, x2], y]
-            (x1).downto(x2).map { |x| [x, y] }
+            x1.downto(x2).map { |x| [x, y] }
           in [:right, [x1, x2], y]
-            (x1).upto(x2).map { |x| [x, y] }
+            x1.upto(x2).map { |x| [x, y] }
           end
         end.to_set
       end
@@ -37,6 +38,7 @@ module AdventOfCode2024
       def loop?(path) = @path.include?(path)
     end
 
+    # Represents an area map.
     class Area
       def initialize(size, obstacles)
         @obstacles = obstacles
@@ -68,6 +70,7 @@ module AdventOfCode2024
       end
     end
 
+    # Helper class to move the guard across area.
     class Pathfinder
       def initialize(area:, guard:)
         @area = area
@@ -80,6 +83,7 @@ module AdventOfCode2024
           next_loc, next_dir = find_next_position
           path = to_guard_path(*next_loc)
           return [:loop, @guard] if @guard.loop?(path)
+
           @guard.move_to(next_loc, next_dir, path)
           return [:outside, @guard] if outside?
         end
@@ -113,6 +117,10 @@ module AdventOfCode2024
     ##
     # Solving puzzle
 
+    def self.part1(input) = Part1.new(input).solution
+    def self.part2(input) = Part2.new(input).solution
+
+    # Finding guard's path.
     class Part1
       def initialize(input)
         @location, obs, @size = parse(input)
@@ -167,6 +175,7 @@ module AdventOfCode2024
       end
     end
 
+    # Finding loops.
     class Part2 < Part1
       def solution
         run => [:outside, guard]
@@ -203,14 +212,6 @@ module AdventOfCode2024
         obs[:rows][y].delete(x)
         obs
       end
-    end
-
-    def self.part1(input)
-      Part1.new(input).solution
-    end
-
-    def self.part2(input)
-      Part2.new(input).solution
     end
   end
 end
